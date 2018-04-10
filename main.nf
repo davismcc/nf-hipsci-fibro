@@ -22,7 +22,7 @@ def helpMessage() {
     The typical command for running the pipeline is as follows:
 
     nextflow run davismcc/nf-hipsci-fibro --reads '*_R{1,2}.fastq.gz' -profile docker
-    nextflow run davismcc/nf-hipsci-fibro -w '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/nf-work' --reads '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/22*/fastq/*_{1,2}_val_{1,2}.fq.gz' --fasta '/hps/nobackup/stegle/datasets/references/human/STAR_GRCh37.75_ERCC/GRCh37.p13.genome.ERCC92.fa' -N 'davis@ebi.ac.uk' --bams '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/*/star/*/*realigned.bqsr.bam'
+    nextflow run davismcc/nf-hipsci-fibro -w '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/nf-work' --reads '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/22*/fastq/*_{1,2}_val_{1,2}.fq.gz' --fasta '/hps/nobackup/stegle/datasets/references/human/STAR_GRCh37.75_ERCC/GRCh37.p13.genome.ERCC92.fa' -N 'davis@ebi.ac.uk' --bams '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/*/star/*/*realigned.bqsr.bam' -profile lsf -resume
  
 
     Mandatory arguments:
@@ -97,7 +97,7 @@ Channel
  * Create a channel for processed bam files
  */
 Channel
-    .fromPath( params.bams, size: -1 )
+    .fromPath( params.bams )
     .ifEmpty { exit 1, "Cannot find any bams matching: ${params.bams}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
     .into { read_files_bams }
 
@@ -215,7 +215,7 @@ process multiqc {
 process bcftools_mpileup {
     tag "$name"
     publishDir "${params.outdir}/mpileup", mode: 'copy',
-        saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
+        saveAs: {"$filename"}
 
     input:
     set val(name), file(bam) from read_files_bams
@@ -226,7 +226,7 @@ process bcftools_mpileup {
 
     script:
     """
-    bcftools mpileup -E -Oz -R ${params.sites} -f $fasta -o "${name}.vcf.gz" $bam
+    bcftools mpileup -E -Oz -R ${params.sites} -f ${fasta} -o "*vcf.gz" ${bam}
     """
 }
 
