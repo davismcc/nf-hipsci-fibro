@@ -22,7 +22,7 @@ def helpMessage() {
     The typical command for running the pipeline is as follows:
 
     nextflow run davismcc/nf-hipsci-fibro --reads '*_R{1,2}.fastq.gz' -profile docker
-    nextflow run davismcc/nf-hipsci-fibro -w '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/nf-work' --reads '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/22*/fastq/*_{1,2}_val_{1,2}.fq.gz' --fasta '/hps/nobackup/stegle/datasets/references/human/STAR_GRCh37.75_ERCC/GRCh37.p13.genome.ERCC92.fa'
+    nextflow run davismcc/nf-hipsci-fibro -w '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/nf-work' --reads '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/22*/fastq/*_{1,2}_val_{1,2}.fq.gz' --fasta '/hps/nobackup/stegle/datasets/references/human/STAR_GRCh37.75_ERCC/GRCh37.p13.genome.ERCC92.fa' -N davis@ebi.ac.uk
  
 
     Mandatory arguments:
@@ -184,7 +184,6 @@ process fastqc {
 }
 
 
-
 /*
  * STEP 2 - MultiQC
  */
@@ -209,9 +208,30 @@ process multiqc {
 }
 
 
+/*
+ * STEP 3 - Call variants: bcftools mpileup
+ */
+params.sites = "/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/exome-point-mutations/mutect/cells_merged.somatic_fibro-ipsc.filtered.ucsc_chr_names.vcf.gz"
+process bcftools_mpileup {
+    tag "$name"
+    publishDir "${params.outdir}/mpileup", mode: 'copy',
+        saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
+
+    input:
+    set val(name), file(reads) from read_files_bams
+
+    output:
+    file "*vcf.gz" into mpileup_results
+
+    script:
+    """
+    bcftools mpileup -E -Oz -R ${params.sites} -f ${params.fasta} -o "${name}.vcf.gz"
+    """
+}
+
 
 /*
- * STEP 3 - Output Description HTML
+ * STEP 4 - Output Description HTML
  */
 process output_documentation {
     tag "$prefix"
@@ -234,7 +254,7 @@ process output_documentation {
 /*
  * Completion e-mail notification
  */
-workflow.onComplete {
+/* workflow.onComplete {
 
     // Set up the e-mail variables
     def subject = "[davismcc/nf-hipsci-fibro] Successful: $workflow.runName"
@@ -309,3 +329,4 @@ workflow.onComplete {
     log.info "[davismcc/nf-hipsci-fibro] Pipeline Complete"
 
 }
+ */
