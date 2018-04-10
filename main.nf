@@ -213,12 +213,12 @@ process multiqc {
  */
 
 process bcftools_mpileup {
-    tag "$name"
+    tag "$bam"
     publishDir "${params.outdir}/mpileup", mode: 'copy',
         saveAs: {"$filename"}
 
     input:
-    set val(name), file(bam) from read_files_bams
+    file bam from read_files_bams
     file fasta from fasta
 
     output:
@@ -226,7 +226,7 @@ process bcftools_mpileup {
 
     script:
     """
-    bcftools mpileup -E -Oz -R ${params.sites} -f ${fasta} -o "*vcf.gz" ${bam}
+    bcftools mpileup -E -Oz -R ${params.sites} -f ${fasta} -o "${bam}.vcf.gz" ${bam}
     """
 }
 
