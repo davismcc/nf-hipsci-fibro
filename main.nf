@@ -22,11 +22,12 @@ def helpMessage() {
     The typical command for running the pipeline is as follows:
 
     nextflow run davismcc/nf-hipsci-fibro --reads '*_R{1,2}.fastq.gz' -profile docker
-    nextflow run davismcc/nf-hipsci-fibro -w '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/nf-work' --reads '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/22*/fastq/*_{1,2}_val_{1,2}.fq.gz' --fasta '/hps/nobackup/stegle/datasets/references/human/STAR_GRCh37.75_ERCC/GRCh37.p13.genome.ERCC92.fa' -N davis@ebi.ac.uk
+    nextflow run davismcc/nf-hipsci-fibro -w '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/nf-work' --reads '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/22*/fastq/*_{1,2}_val_{1,2}.fq.gz' --fasta '/hps/nobackup/stegle/datasets/references/human/STAR_GRCh37.75_ERCC/GRCh37.p13.genome.ERCC92.fa' -N 'davis@ebi.ac.uk' --bams '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/*/star/*/*realigned.bqsr.bam'
  
 
     Mandatory arguments:
       --reads                       Path to input data (must be surrounded with quotes)
+      --bams                        Path to processed BAM files for variant calling
       --genome                      Name of iGenomes reference
       -profile                      Hardware config to use. lsf / docker / aws
 
@@ -59,7 +60,7 @@ params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : 
 params.multiqc_config = "$baseDir/conf/multiqc_config.yaml"
 params.email = false
 params.plaintext_email = false
-params.bams = '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/*/star/*/*.2pass.Aligned.sortedByCoord.split.realigned.bqsr.bam'
+// params.bams = '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/*/star/*/*.2pass.Aligned.sortedByCoord.split.realigned.bqsr.bam'
 
 multiqc_config = file(params.multiqc_config)
 output_docs = file("$baseDir/docs/output.md")
@@ -96,7 +97,7 @@ Channel
  * Create a channel for processed bam files
  */
 Channel
-    .fromPath( params.bams )
+    .fromPath( params.bams, size: -1 )
     .ifEmpty { exit 1, "Cannot find any bams matching: ${params.bams}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
     .into { read_files_bams }
 
