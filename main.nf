@@ -22,7 +22,7 @@ def helpMessage() {
     The typical command for running the pipeline is as follows:
 
     nextflow run davismcc/nf-hipsci-fibro --reads '*_R{1,2}.fastq.gz' -profile docker
-    nextflow run davismcc/nf-hipsci-fibro --reads 'Data/SS2_2017/22*/*_{1,2}_val_{1,2}.fq.gz' -profile lsf --fasta /hps/nobackup/stegle/datasets/references/human/STAR_GRCh37.75_ERCC/GRCh37.p13.genome.ERCC92.fa
+    nextflow run davismcc/nf-hipsci-fibro --reads '../singlecell_fibroblast/Data/SS2_2017/22*/*_{1,2}_val_{1,2}.fq.gz' -profile lsf --fasta /hps/nobackup/stegle/datasets/references/human/STAR_GRCh37.75_ERCC/GRCh37.p13.genome.ERCC92.fa
 
     Mandatory arguments:
       --reads                       Path to input data (must be surrounded with quotes)
