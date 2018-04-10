@@ -91,6 +91,14 @@ Channel
     .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
     .into { read_files_fastqc }
 
+/*
+ * Create a channel for processed bam files
+ */
+params.bams = '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/*/star/*/*.2pass.Aligned.sortedByCoord.split.realigned.bqsr.bam'
+Channel
+    .fromPath( params.bams )
+    .ifEmpty { exit 1, "Cannot find any bams matching: ${params.bams}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
+    .into { read_files_bams }
 
 
 
