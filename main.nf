@@ -92,6 +92,8 @@ Channel
     .into { read_files_fastqc }
 
 
+
+
 // Header log info
 log.info "========================================="
 log.info " davismcc/nf-hipsci-fibro v${params.version}"
@@ -251,10 +253,9 @@ workflow.onComplete {
     if(workflow.commitId) email_fields['summary']['Pipeline repository Git Commit'] = workflow.commitId
     if(workflow.revision) email_fields['summary']['Pipeline Git branch/tag'] = workflow.revision
     if(workflow.container) email_fields['summary']['Docker image'] = workflow.container
-    //email_fields['software_versions'] = software_versions
-    /* email_fields['software_versions'] = [:]
+    email_fields['software_versions'] = software_versions
     email_fields['software_versions']['Nextflow Build'] = workflow.nextflow.build
-    email_fields['software_versions']['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp */
+    email_fields['software_versions']['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp
 
     // Render the TXT template
     def engine = new groovy.text.GStringTemplateEngine()
