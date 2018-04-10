@@ -252,9 +252,9 @@ workflow.onComplete {
     if(workflow.revision) email_fields['summary']['Pipeline Git branch/tag'] = workflow.revision
     if(workflow.container) email_fields['summary']['Docker image'] = workflow.container
     //email_fields['software_versions'] = software_versions
-    email_fields['software_versions'] = [:]
+    /* email_fields['software_versions'] = [:]
     email_fields['software_versions']['Nextflow Build'] = workflow.nextflow.build
-    email_fields['software_versions']['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp
+    email_fields['software_versions']['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp */
 
     // Render the TXT template
     def engine = new groovy.text.GStringTemplateEngine()
