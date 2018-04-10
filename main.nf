@@ -22,7 +22,7 @@ def helpMessage() {
     The typical command for running the pipeline is as follows:
 
     nextflow run davismcc/nf-hipsci-fibro --reads '*_R{1,2}.fastq.gz' -profile docker
-    nextflow run davismcc/nf-hipsci-fibro -w '/hps/nobackup/hipsci/scratch/singlecell_fibroblast' --reads '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/22*/fastq/*_{1,2}_val_{1,2}.fq.gz' --fasta '/hps/nobackup/stegle/datasets/references/human/STAR_GRCh37.75_ERCC/GRCh37.p13.genome.ERCC92.fa'
+    nextflow run davismcc/nf-hipsci-fibro -w '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/nf-work' --reads '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/22*/fastq/*_{1,2}_val_{1,2}.fq.gz' --fasta '/hps/nobackup/stegle/datasets/references/human/STAR_GRCh37.75_ERCC/GRCh37.p13.genome.ERCC92.fa'
  
 
     Mandatory arguments:
@@ -251,7 +251,8 @@ workflow.onComplete {
     if(workflow.commitId) email_fields['summary']['Pipeline repository Git Commit'] = workflow.commitId
     if(workflow.revision) email_fields['summary']['Pipeline Git branch/tag'] = workflow.revision
     if(workflow.container) email_fields['summary']['Docker image'] = workflow.container
-    email_fields['software_versions'] = software_versions
+    //email_fields['software_versions'] = software_versions
+    email_fields['software_versions'] = [:]
     email_fields['software_versions']['Nextflow Build'] = workflow.nextflow.build
     email_fields['software_versions']['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp
 
