@@ -59,6 +59,7 @@ params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : 
 params.multiqc_config = "$baseDir/conf/multiqc_config.yaml"
 params.email = false
 params.plaintext_email = false
+params.bams = '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/*/star/*/*.2pass.Aligned.sortedByCoord.split.realigned.bqsr.bam'
 
 multiqc_config = file(params.multiqc_config)
 output_docs = file("$baseDir/docs/output.md")
@@ -94,7 +95,6 @@ Channel
 /*
  * Create a channel for processed bam files
  */
-params.bams = '/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/SS2_2017/*/star/*/*.2pass.Aligned.sortedByCoord.split.realigned.bqsr.bam'
 Channel
     .fromPath( params.bams )
     .ifEmpty { exit 1, "Cannot find any bams matching: ${params.bams}\nNB: Path needs to be enclosed in quotes!\nNB: Path requires at least one * wildcard!\nIf this is single-end data, please specify --singleEnd on the command line." }
@@ -162,7 +162,6 @@ process get_software_versions {
 }
 
 
-
 /*
  * STEP 1 - FastQC
  */
@@ -211,21 +210,22 @@ process multiqc {
 /*
  * STEP 3 - Call variants: bcftools mpileup
  */
-params.sites = "/hps/nobackup/hipsci/scratch/singlecell_fibroblast/Data/exome-point-mutations/mutect/cells_merged.somatic_fibro-ipsc.filtered.ucsc_chr_names.vcf.gz"
+
 process bcftools_mpileup {
     tag "$name"
     publishDir "${params.outdir}/mpileup", mode: 'copy',
         saveAs: {filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"}
 
     input:
-    set val(name), file(reads) from read_files_bams
+    set val(name), file(bam) from read_files_bams
+    file fasta from fasta
 
     output:
     file "*vcf.gz" into mpileup_results
 
     script:
     """
-    bcftools mpileup -E -Oz -R ${params.sites} -f ${params.fasta} -o "${name}.vcf.gz"
+    bcftools mpileup -E -Oz -R ${params.sites} -f $fasta -o "${name}.vcf.gz" $bam
     """
 }
 
@@ -250,83 +250,3 @@ process output_documentation {
 }
 
 
-
-/*
- * Completion e-mail notification
- */
-/* workflow.onComplete {
-
-    // Set up the e-mail variables
-    def subject = "[davismcc/nf-hipsci-fibro] Successful: $workflow.runName"
-    if(!workflow.success){
-      subject = "[davismcc/nf-hipsci-fibro] FAILED: $workflow.runName"
-    }
-    def email_fields = [:]
-    email_fields['version'] = params.version
-    email_fields['runName'] = custom_runName ?: workflow.runName
-    email_fields['success'] = workflow.success
-    email_fields['dateComplete'] = workflow.complete
-    email_fields['duration'] = workflow.duration
-    email_fields['exitStatus'] = workflow.exitStatus
-    email_fields['errorMessage'] = (workflow.errorMessage ?: 'None')
-    email_fields['errorReport'] = (workflow.errorReport ?: 'None')
-    email_fields['commandLine'] = workflow.commandLine
-    email_fields['projectDir'] = workflow.projectDir
-    email_fields['summary'] = summary
-    email_fields['summary']['Date Started'] = workflow.start
-    email_fields['summary']['Date Completed'] = workflow.complete
-    email_fields['summary']['Pipeline script file path'] = workflow.scriptFile
-    email_fields['summary']['Pipeline script hash ID'] = workflow.scriptId
-    if(workflow.repository) email_fields['summary']['Pipeline repository Git URL'] = workflow.repository
-    if(workflow.commitId) email_fields['summary']['Pipeline repository Git Commit'] = workflow.commitId
-    if(workflow.revision) email_fields['summary']['Pipeline Git branch/tag'] = workflow.revision
-    if(workflow.container) email_fields['summary']['Docker image'] = workflow.container
-    email_fields['software_versions'] = software_versions
-    email_fields['software_versions']['Nextflow Build'] = workflow.nextflow.build
-    email_fields['software_versions']['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp
-
-    // Render the TXT template
-    def engine = new groovy.text.GStringTemplateEngine()
-    def tf = new File("$baseDir/assets/email_template.txt")
-    def txt_template = engine.createTemplate(tf).make(email_fields)
-    def email_txt = txt_template.toString()
-
-    // Render the HTML template
-    def hf = new File("$baseDir/assets/email_template.html")
-    def html_template = engine.createTemplate(hf).make(email_fields)
-    def email_html = html_template.toString()
-
-    // Render the sendmail template
-    def smail_fields = [ email: params.email, subject: subject, email_txt: email_txt, email_html: email_html, baseDir: "$baseDir" ]
-    def sf = new File("$baseDir/assets/sendmail_template.txt")
-    def sendmail_template = engine.createTemplate(sf).make(smail_fields)
-    def sendmail_html = sendmail_template.toString()
-
-    // Send the HTML e-mail
-    if (params.email) {
-        try {
-          if( params.plaintext_email ){ throw GroovyException('Send plaintext e-mail, not HTML') }
-          // Try to send HTML e-mail using sendmail
-          [ 'sendmail', '-t' ].execute() << sendmail_html
-          log.info "[davismcc/nf-hipsci-fibro] Sent summary e-mail to $params.email (sendmail)"
-        } catch (all) {
-          // Catch failures and try with plaintext
-          [ 'mail', '-s', subject, params.email ].execute() << email_txt
-          log.info "[davismcc/nf-hipsci-fibro] Sent summary e-mail to $params.email (mail)"
-        }
-    }
-
-    // Write summary e-mail HTML to a file
-    def output_d = new File( "${params.outdir}/Documentation/" )
-    if( !output_d.exists() ) {
-      output_d.mkdirs()
-    }
-    def output_hf = new File( output_d, "pipeline_report.html" )
-    output_hf.withWriter { w -> w << email_html }
-    def output_tf = new File( output_d, "pipeline_report.txt" )
-    output_tf.withWriter { w -> w << email_txt }
-
-    log.info "[davismcc/nf-hipsci-fibro] Pipeline Complete"
-
-}
- */
